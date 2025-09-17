@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.rga</groupId>
-	<artifactId>question-service</artifactId>
+	<artifactId>quiz_service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>question-service</name>
+	<name>quiz_service</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
@@ -43,10 +43,10 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 		</dependency>
-		<!-- <dependency>
+		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-openfeign</artifactId>
-		</dependency> -->
+		</dependency>
 
 		<dependency>
 			<groupId>org.postgresql</groupId>
