@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # === 1. BASES DE DATOS ===
+  questiondb:
+    image: postgres:14-alpine
+    container_name: questiondb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin 
+      POSTGRES_DB: questiondb
+    ports:
+      - "5433:5432" # Puerto para acceder directamente desde la máquina local si es necesario
+    healthcheck: # Esperar a que la base de datos esté lista
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+  quizdb:
+    image: postgres:14-alpine
+    container_name: quizdb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin 
+      POSTGRES_DB: quizdb
+  
+  # === 2. SERVICE REGISTRY (El primero en iniciar) ===
+  service-registry:
+    build: ./service-registry # Busca el Dockerfile en la carpeta service-registry
+    container_name: service-registry
+    ports:
+      - "8761:8761"
+    environment:
+      # Configuración de Spring/Eureka. Debe usar el puerto interno.
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka
+    depends_on:
+      # No depende de nada más que de sí mismo (para evitar problemas)
+      - questiondb
+      - quizdb 
+
+  # === 3. SERVICIO DE PREGUNTAS ===
+  question-service:
+    build: ./question-service
+    container_name: question-service
+    ports:
+      - "8080:8080"
+    environment:
+      # Conexión a la DB y al Registro
+      SPRING_DATASOURCE_URL: jdbc:postgresql://questiondb:5432/questiondb # Usamos el nombre del servicio DB
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka
+    depends_on:
+      questiondb:
+        condition: service_healthy # Espera que la DB esté lista (saludable)
+      service-registry:
+        condition: service_started # Espera que Eureka haya iniciado
+      
+  # === 4. SERVICIO DE CUESTIONARIOS ===
+  quiz-service:
+    build: ./quiz-service
+    container_name: quiz-service
+    ports:
+      - "8090:8090"
+    environment:
+      # Conexión a la DB y al Registro
+      SPRING_DATASOURCE_URL: jdbc:postgresql://quizdb:5432/quizdb # Usamos el nombre del servicio DB
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka
+    depends_on:
+      quizdb:
+        condition: service_healthy
+      question-service:
+        condition: service_started # Depende de Question Service para poder hacer llamadas Feign
+      service-registry:
+        condition: service_started
+
+  # === 5. API GATEWAY ===
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8765:8765"
+    environment:
+      # Conexión al Registro
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8761/eureka
+    depends_on:
+      service-registry:
+        condition: service_started # Solo necesita que Eureka esté arriba para obtener las rutas

@@ -1,0 +1,36 @@
+# ----------------------------------------------------
+# PRIMERA ETAPA: COMPILACIÓN (Usar JDK)
+# Usamos una etiqueta oficial que existe en Docker Hub.
+# ----------------------------------------------------
+FROM eclipse-temurin:17-jre-jammy AS builder
+# Configura el directorio de trabajo dentro del contenedor
+WORKDIR /app
+
+# Copia los archivos de configuración de Maven (pom.xml)
+# Si tienes un pom.xml maestro en la raíz, debes ajustar este paso:
+# Por simplicidad, asumimos que cada servicio tiene su propio pom.xml
+COPY pom.xml .
+COPY src src/
+
+COPY mvnw .
+COPY mvnw.cmd .
+COPY .mvn .mvn/
+
+# Compila y empaqueta la aplicación (Saltando las pruebas para la compilación rápida)
+RUN ./mvnw clean install -DskipTests
+
+# ----------------------------------------------------
+# SEGUNDA ETAPA: IMAGEN FINAL (Usar JRE Slim)
+# ----------------------------------------------------
+FROM eclipse-temurin:17-jre-jammy
+# Crea un punto de volumen para la aplicación
+WORKDIR /app
+
+# Copia el JAR de la etapa anterior
+COPY --from=builder /app/target/*.jar app.jar
+
+# Define la variable de entorno del puerto (Ya estaba bien)
+ENV SERVER_PORT=8761
+
+# Comando para ejecutar la aplicación
+ENTRYPOINT ["java", "-jar", "app.jar"]

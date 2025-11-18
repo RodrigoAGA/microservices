@@ -5,9 +5,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
+import lombok.AllArgsConstructor; 
+import lombok.NoArgsConstructor;  
 
 @Data
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 public class Question {
 
     @Id
