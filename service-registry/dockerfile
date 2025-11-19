@@ -2,7 +2,7 @@
 # PRIMERA ETAPA: COMPILACIÓN (Usar JDK)
 # Usamos una etiqueta oficial que existe en Docker Hub.
 # ----------------------------------------------------
-FROM eclipse-temurin:17-jre-jammy AS builder
+FROM eclipse-temurin:21-jdk-jammy AS builder
 # Configura el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
@@ -22,7 +22,7 @@ RUN ./mvnw clean install -DskipTests
 # ----------------------------------------------------
 # SEGUNDA ETAPA: IMAGEN FINAL (Usar JRE Slim)
 # ----------------------------------------------------
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 # Crea un punto de volumen para la aplicación
 WORKDIR /app
 
